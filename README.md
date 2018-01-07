@@ -1,5 +1,7 @@
 # Flight rules for Git
 
+🌍
+*[English](README.md) ∙ [Русский](README_ru.md) ∙ [简体中文](README_zh-CN.md)*
 
 #### What are "flight rules"?
 
@@ -43,6 +45,7 @@ For clarity's sake all examples in this document use a customized bash prompt in
     - [I want to discard only my unstaged local changes](#i-want-to-discard-only-my-unstaged-local-changes)
     - [I want to discard all of my untracked files](#i-want-to-discard-all-of-my-untracked-files)
   - [Branches](#branches)
+    - [I want to list all branches](#i-want-to-list-all-branches)
     - [Create a branch from a commit](#create-a-branch-from-a-commit)
     - [I pulled from/into the wrong branch](#i-pulled-frominto-the-wrong-branch)
     - [I want to discard local commits so my branch is the same as one on the server](#i-want-to-discard-local-commits-so-my-branch-is-the-same-as-one-on-the-server)
@@ -52,9 +55,13 @@ For clarity's sake all examples in this document use a customized bash prompt in
     - [I want to delete local branches that were deleted upstream](#i-want-to-delete-local-branches-that-were-deleted-upstream)
     - [I accidentally deleted my branch](#i-accidentally-deleted-my-branch)
     - [I want to delete a branch](#i-want-to-delete-a-branch)
+    - [I want to delete multiple branches](#i-want-to-delete-multiple-branches)
     - [I want to rename a branch](#i-want-to-rename-a-branch)
     - [I want to checkout to a remote branch that someone else is working on](#i-want-to-checkout-to-a-remote-branch-that-someone-else-is-working-on)
     - [I want to create a new remote branch from current local one](#i-want-to-create-a-new-remote-branch-from-current-local-one)
+    - [I want to set a remote branch as the upstream for a local branch](#i-want-to-set-a-remote-branch-as-the-upstream-for-a-local-branch)
+    - [I want to set my HEAD to track the default remote branch](#i-want-to-set-my-head-to-track-the-default-remote-branch)
+    - [I made changes on the wrong branch](#i-made-changes-on-the-wrong-branch)
   - [Rebasing and Merging](#rebasing-and-merging)
     - [I want to undo rebase/merge](#i-want-to-undo-rebasemerge)
     - [I rebased, but I don't want to force push](#i-rebased-but-i-dont-want-to-force-push)
@@ -74,13 +81,18 @@ For clarity's sake all examples in this document use a customized bash prompt in
     - [Apply a specific stash from list](#apply-a-specific-stash-from-list)
   - [Finding](#finding)
     - [I want to find a string in any commit](#i-want-to-find-a-string-in-any-commit)
-    - [I want to find by author/committer](#i-want-to-find-by-author-committer)
-  - [Miscellaneous Objects](#miscellaneous-objects)
+    - [I want to find by author/committer](#i-want-to-find-by-authorcommitter)
+    - [I want to list commits containing specific files](#i-want-to-list-commits-containing-specific-files)
+    - [Find a tag where a commit is referenced](#find-a-tag-where-a-commit-is-referenced)
+  - [Submodules](#submodules)
     - [Clone all submodules](#clone-all-submodules)
     - [Remove a submodule](#remove-a-submodule)
+  - [Miscellaneous Objects](#miscellaneous-objects)
+    - [Restore a deleted file](#restore-a-deleted-file)
     - [Delete tag](#delete-tag)
     - [Recover a deleted tag](#recover-a-deleted-tag)
     - [Deleted Patch](#deleted-patch)
+    - [Exporting a repository as a Zip file](#exporting-a-repository-as-a-zip-file)
   - [Tracking Files](#tracking-files)
     - [I want to change a file name's capitalization, without changing the contents of the file](#i-want-to-change-a-file-names-capitalization-without-changing-the-contents-of-the-file)
     - [I want to overwrite local files when doing a git pull](#i-want-to-overwrite-local-files-when-doing-a-git-pull)
@@ -100,7 +112,6 @@ For clarity's sake all examples in this document use a customized bash prompt in
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
-
 ## Editing Commits
 
 <a name="diff-last"></a>
@@ -112,13 +123,18 @@ Let's say that you just blindly committed changes with `git commit -a` and you'r
 (master)$ git show
 ```
 
-or
+Or
 
 ```sh
 $ git log -n1 -p
 ```
 
-<a name="#i-wrote-the-wrong-thing-in-a-commit-message"></a>
+If you want to see a file at a specific commit, you can also do this (where `<commitid>` is the commit you're interested in):
+
+```sh
+$ git show <commitid>:filename
+```
+
 ### I wrote the wrong thing in a commit message
 
 If you wrote the wrong thing and the commit has not yet been pushed, you can do the following to change the commit message:
@@ -140,13 +156,17 @@ If you have already pushed the message, you can amend the commit and force push,
 If it's a single commit, amend it
 
 ```sh
-$ git commit --amend --author "New Authorname <authoremail@mydomain.com>"
+$ git commit --amend --no-edit --author "New Authorname <authoremail@mydomain.com>"
+```
+
+An alternative is to correctly configure your author settings in `git config --global author.(name|email)` and then use
+
+```sh
+$ git commit --amend --reset-author --no-edit
 ```
 
 If you need to change all of history, see the man page for `git filter-branch`.
 
-
-<a href="#i-want-to-remove-a-file-from-the-previous-commit"></a>
 ### I want to remove a file from the previous commit
 
 In order to remove changes for a file from the previous commit, do the following:
@@ -267,12 +287,10 @@ $ git add -N filename.x
 Then, you will need to use the `e` option to manually choose which lines to add. Running `git diff --cached` or
 `git diff --staged` will show you which lines you have staged compared to which are still saved locally.
 
-
 <a href="stage-in-two-commits"></a>
 ### I want to add changes in one file to two different commits
 
 `git add` will add the entire file to a commit. `git add -p` will allow to interactively select which changes you want to add.
-
 
 <a href="unstaging-edits-and-staging-the-unstaged"></a>
 ### I want to stage my unstaged edits, and unstage my staged edits
@@ -342,12 +360,11 @@ $ git reset --hard HEAD
 This will remove all local untracked files, so only files tracked by Git remain:
 
 ```sh
-$ git clean -fdx
+$ git clean -fd
 ```
 
-WARNING: -x will also remove all ignored files!
+`-x` will also remove all ignored files.
 
-<a href="i-want-to-discard-specific-unstaged-changes"></a>
 ### I want to discard specific unstaged changes
 
 When you want to get rid of some, but not all changes in your working copy.
@@ -376,7 +393,6 @@ $ git stash -p
 $ git stash drop
 ```
 
-<a href="i-want-to-discard-specific-unstaged-files"></a>
 ### I want to discard specific unstaged files
 
 When you want to get rid of one specific file in your working copy.
@@ -391,7 +407,6 @@ Alternatively, to discard multiple files in your working copy, list them all.
 $ git checkout myFirstFile mySecondFile
 ```
 
-<a href="i-want-to-discard-only-my-unstaged-local-changes"></a>
 ### I want to discard only my unstaged local changes
 
 When you want to get rid of all of your unstaged local uncommitted changes
@@ -409,12 +424,32 @@ $ git clean -f
 ```
 
 ## Branches
+
+### I want to list all branches
+
+List local branches
+
+```sh
+$ git branch
+```
+
+List remote branches
+
+```sh
+$ git branch -r
+```
+
+List all branches (both local and remote)
+
+```sh
+$ git branch -a
+```
+
 <a name="create-branch-from-commit"></a>
 ### Create a branch from a commit
 ```sh
 $ git checkout -b <branch> <SHA1_OF_COMMIT>
 ```
-
 
 <a name="pull-wrong-branch"></a>
 ### I pulled from/into the wrong branch
@@ -563,7 +598,7 @@ First, let's reset our master branch to the correct commit (`a13b85e`):
 HEAD is now at a13b85e
 ```
 
-Now, we can create a fresh branch for our bug #21 branch:
+Now, we can create a fresh branch for our bug #21:
 
 ```sh
 (master)$ git checkout -b 21
@@ -578,7 +613,6 @@ Now, let's *cherry-pick* the commit for bug #21 on top of our branch. That means
 
 At this point, there is a possibility there might be conflicts. See the [**There were conflicts**](#merge-conflict) section in the [interactive rebasing section above](#interactive-rebase) for how to resolve conflicts.
 
-
 Now let's create a new branch for bug #14, also based on master
 
 ```sh
@@ -592,7 +626,6 @@ And finally, let's cherry-pick the commit for bug #14:
 ```sh
 (14)$ git cherry-pick 5ea5173
 ```
-
 
 <a name="delete-stale-local-branches"></a>
 ### I want to delete local branches that were deleted upstream
@@ -674,7 +707,6 @@ README.md foo.txt
 
 Voila! We got our removed file back. `git reflog` is also useful when rebasing goes terribly wrong.
 
-<a name="i-want-to-delete-a-branch"></a>
 ### I want to delete a branch
 
 To delete a remote branch:
@@ -701,7 +733,14 @@ To delete a local branch that *has not* been merged to the current branch or an 
 (master)$ git branch -D my-branch
 ```
 
-<a name="i-want-to-rename-a-branch"></a>
+### I want to delete multiple branches
+
+Say you want to delete all branches that start with `fix/`:
+
+```sh
+(master)$ git branch | grep 'fix/' | xargs git branch -d
+```
+
 ### I want to rename a branch
 
 To rename the current (local) branch:
@@ -737,7 +776,6 @@ Switched to a new branch 'daves'
 
 This will give you a local copy of the branch `daves`, and any update that has been pushed will also show up remotely.
 
-<a name="i-want-to-create-a-new-remote-branch-from-current-local-one"></a>
 ### I want to create a new remote branch from current local one
 
 ```sh
@@ -758,6 +796,49 @@ $ git push
 
 The behavior of the other modes of ```git push``` is described in the doc of push.default.
 
+### I want to set a remote branch as the upstream for a local branch
+
+You can set a remote branch as the upstream for the current local branch using:
+
+```sh
+$ git branch --set-upstream-to [remotename]/[branch]
+# or, using the shorthand:
+$ git branch -u [remotename]/[branch]
+```
+
+To set the upstream remote branch for another local branch:
+
+```sh
+$ git branch -u [remotename]/[branch] [local-branch]
+```
+
+<a name="i-want-to-set-my-HEAD-to-track-the-default-remote-branch"></a>
+### I want to set my HEAD to track the default remote branch
+
+By checking your remote branches, you can see which remote branch your HEAD is tracking. In some cases, this is not the desired branch.
+
+```sh
+$ git branch -r
+  origin/HEAD -> origin/gh-pages
+  origin/master
+```
+
+To change `origin/HEAD` to track `origin/master`, you can run this command:
+
+```sh
+$ git remote set-head origin --auto
+origin/HEAD set to master
+```
+
+### I made changes on the wrong branch
+
+You've made uncommitted changes and realise you're on the wrong branch. Stash changes and apply them to the branch you want:
+
+```sh
+(wrong_branch)$ git stash
+(wrong_branch)$ git checkout <correct_branch>
+(correct_branch)$ git stash apply
+```
 
 ## Rebasing and Merging
 
@@ -901,7 +982,6 @@ Sometimes you have several work in progress commits that you want to combine bef
 
 This will do an interactive rebase that lists only the commits that you haven't already pushed, so it will be safe to reorder/fix/squash anything in the list.
 
-<a name="i-need-to-abort-the-merge"></a>
 #### I need to abort the merge
 
 Sometimes the merge can produce problems in certain files, in those cases we can use the option `abort` to abort the current conflict resolution process, and try to reconstruct the pre-merge state.
@@ -912,7 +992,6 @@ Sometimes the merge can produce problems in certain files, in those cases we can
 
 This command is available since Git version >= 1.7.4
 
-<a name="check-if-all-commits-on-a-branch-are-merged"></a>
 ### Check if all commits on a branch are merged
 
 To check if all commits on a branch are merged into another branch, you should diff between the heads (or any commits) of those branches:
@@ -1004,7 +1083,6 @@ If at any time you want to stop the entire rebase and go back to the original st
 <a name="stashing"></a>
 ## Stash
 
-<a name="stash-all-edits"></a>
 ### Stash all edits
 
 To stash all the edits in your working directory
@@ -1019,7 +1097,6 @@ If you also want to stash untracked files, use `-u` option.
 $ git stash -u
 ```
 
-<a name="stash-specific-files"></a>
 ### Stash specific files
 
 To stash only one file from your working directory
@@ -1058,10 +1135,8 @@ $ git stash apply "stash@{n}"
 
 Here, 'n' indicates the position of the stash in the stack. The topmost stash will be position 0.
 
-<a name="finding"></a>
 ## Finding
 
-<a name="i-want-to-find-a-string-in-any-commit"></a>
 ### I want to find a string in any commit
 
 To find a certain string which was introduced in any commit, you can use the following structure:
@@ -1090,8 +1165,35 @@ $ git log --committer=<name or email>
 
 Keep in mind that author and committer are not the same. The `--author` is the person who originally wrote the code; on the other hand, the `--committer`, is the person who committed the code on behalf of the original author.
 
-<a name="miscellaneous-objects"></a>
-## Miscellaneous Objects
+### I want to list commits containing specific files
+
+To find all commits containing a specific file you can use:
+
+```sh
+$ git log -- <path to file>
+```
+
+You would usually specify an exact path, but you may also use wild cards in the path and file name:
+
+```sh
+$ git log -- **/*.js
+```
+
+While using wildcards, it's useful to inform `--name-status` to see the list of commited files:
+
+```sh
+$ git log --name-status -- **/*.js
+```
+
+### Find a tag where a commit is referenced
+
+To find all tags containing a specific commit:
+
+```sh
+$ git tag --contains <commitid>
+```
+
+## Submodules
 
 <a name="clone-submodules"></a>
 ### Clone all submodules
@@ -1112,13 +1214,28 @@ $ git submodule update --init --recursive
 Creating a submodule is pretty straight-forward, but deleting them less so. The commands you need are:
 
 ```sh
-$ git submodule deinit submodulename   
+$ git submodule deinit submodulename
 $ git rm submodulename
 $ git rm --cached submodulename
 $ rm -rf .git/modules/submodulename
 ```
 
-<a name="delete-tag"></a>
+## Miscellaneous Objects
+
+### Restore a deleted file
+
+First find the commit when the file last existed:
+
+```sh
+$ git rev-list -n 1 HEAD -- filename
+```
+
+Then checkout that file:
+
+```
+git checkout deletingcommitid^ -- filename
+```
+
 ### Delete tag
 
 ```sh
@@ -1143,7 +1260,6 @@ $ git update-ref refs/tags/<tag_name> <hash>
 
 Your tag should now have been restored.
 
-<a name="deleted-patch"></a>
 ### Deleted Patch
 
 If someone has sent you a pull request on GitHub, but then deleted their original fork, you will be unable to clone their repository or to use `git am` as the [.diff, .patch](https://github.com/blog/967-github-secrets) urls become unavailable. But you can checkout the PR itself using [GitHub's special refs](https://gist.github.com/piscisaureus/3342247). To fetch the content of PR#1 into a new branch called pr_1:
@@ -1152,6 +1268,12 @@ If someone has sent you a pull request on GitHub, but then deleted their origina
 $ git fetch origin refs/pull/1/head:pr_1
 From github.com:foo/bar
  * [new ref]         refs/pull/1/head -> pr_1
+```
+
+### Exporting a repository as a Zip file
+
+```sh
+$ git archive --format zip --output /full/path/to/zipfile.zip master
 ```
 
 ## Tracking Files
@@ -1163,7 +1285,6 @@ From github.com:foo/bar
 (master)$ git mv --force myfile MyFile
 ```
 
-<a href="i-want-to-overwrite-local-files-when-doing-a-git-pull"></a>
 ### I want to overwrite local files when doing a git pull
 
 ```sh
@@ -1178,7 +1299,6 @@ From github.com:foo/bar
 (master)$ git rm --cached log.txt
 ```
 
-<a href="i-want-to-revert-a-file-to-a-specific-revision"></a>
 ### I want to revert a file to a specific revision
 
 Assuming the hash of the commit you want is c5f567:
@@ -1259,7 +1379,6 @@ $ git config --global credential.helper 'cache --timeout=3600'
 # Set the cache to timeout after 1 hour (setting is in seconds)
 ```
 
-<a name="i-want-to-make-git-ignore-permissions-and-filemode-changes"></a>
 ### I want to make Git ignore permissions and filemode changes
 
 ```sh
@@ -1272,7 +1391,6 @@ If you want to make this the default behaviour for logged-in users, then use:
 $ git config --global core.fileMode false
 ```
 
-<a href="#ive-no-idea-what-i-did-wrong"></a>
 ## I've no idea what I did wrong
 
 So, you're screwed - you `reset` something, or you merged the wrong branch, or you force pushed and now you can't find your commits. You know, at some point, you were doing alright, and you want to go back to some state you were at.
@@ -1298,7 +1416,6 @@ Using `git reset` it is then possible to change master back to the commit it was
 
 (copied and edited from [Source](https://www.atlassian.com/git/tutorials/rewriting-history/git-reflog)).
 
-
 # Other Resources
 
 ## Books
@@ -1308,6 +1425,7 @@ Using `git reset` it is then possible to change master back to the commit it was
 
 ## Tutorials
 
+* [Atlassian's Git tutorial](https://www.atlassian.com/git/tutorials) Get Git right with tutorials from beginner to advanced.
 * [Learn Git branching](https://learngitbranching.js.org/) An interactive web based branching/merging/rebasing tutorial
 * [Getting solid at Git rebase vs. merge](https://medium.com/@porteneuve/getting-solid-at-git-rebase-vs-merge-4fa1a48c53aa)
 * [git-workflow](https://github.com/asmeurer/git-workflow) - [Aaron Meurer](https://github.com/asmeurer)'s howto on using Git to contribute to open source repositories
@@ -1328,7 +1446,7 @@ Using `git reset` it is then possible to change master back to the commit it was
 * [git-cola](https://git-cola.github.io/) - another Git client for Windows and OS X
 * [GitUp](https://github.com/git-up/GitUp) - A newish GUI that has some very opinionated ways of dealing with Git's complications
 * [gitx-dev](https://rowanj.github.io/gitx/) - another graphical Git client for OS X
-* [Source Tree](https://www.sourcetreeapp.com/) - a free graphical Git client for Windows and OS X
+* [Sourcetree](https://www.sourcetreeapp.com/) - Simplicity meets power in a beautiful and free Git GUI. For Windows and Mac.
 * [Tower](https://www.git-tower.com/) - graphical Git client for OS X (paid)
 * [tig](https://jonas.github.io/tig/) - terminal text-mode interface for Git
 * [Magit](https://magit.vc/) - Interface to Git implemented as an Emacs package.
